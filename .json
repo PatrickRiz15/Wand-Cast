@@ -1,0 +1,152 @@
+{
+  "code": 200,
+  "message": "success",
+  "data": [
+    {
+      "sku": "H6008",
+      "device": "46:F5:D4:AD:FC:02:B4:A0",
+      "deviceName": "Fan Light 2",
+      "type": "devices.types.light",
+      "capabilities": [
+        {
+          "type": "devices.capabilities.on_off",
+          "instance": "powerSwitch",
+          "parameters": {
+            "dataType": "ENUM",
+            "options": [
+              { "name": "on", "value": 1 },
+              { "name": "off", "value": 0 }
+            ]
+          }
+        },
+        {
+          "type": "devices.capabilities.range",
+          "instance": "brightness",
+          "parameters": {
+            "unit": "unit.percent",
+            "dataType": "INTEGER",
+            "range": { "min": 1, "max": 100, "precision": 1 }
+          }
+        },
+        {
+          "type": "devices.capabilities.color_setting",
+          "instance": "colorRgb",
+          "parameters": {
+            "dataType": "INTEGER",
+            "range": { "min": 0, "max": 16777215, "precision": 1 }
+          }
+        },
+        {
+          "type": "devices.capabilities.color_setting",
+          "instance": "colorTemperatureK",
+          "parameters": {
+            "dataType": "INTEGER",
+            "range": { "min": 2000, "max": 9000, "precision": 1 }
+          }
+        },
+        {
+          "type": "devices.capabilities.dynamic_scene",
+          "instance": "lightScene",
+          "parameters": { "dataType": "ENUM", "options": [] }
+        },
+        {
+          "type": "devices.capabilities.dynamic_scene",
+          "instance": "diyScene",
+          "parameters": { "dataType": "ENUM", "options": [] }
+        }
+      ]
+    },
+    {
+      "sku": "H5080",
+      "device": "C4:1E:9C:04:A0:A2:39:67",
+      "deviceName": "Kitchen Light",
+      "type": "devices.types.socket",
+      "capabilities": [
+        {
+          "type": "devices.capabilities.on_off",
+          "instance": "powerSwitch",
+          "parameters": {
+            "dataType": "ENUM",
+            "options": [
+              { "name": "on", "value": 1 },
+              { "name": "off", "value": 0 }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "sku": "H5080",
+      "device": "12:9B:D4:AD:FC:05:88:44",
+      "deviceName": "Christmas Tree Light",
+      "type": "devices.types.socket",
+      "capabilities": [
+        {
+          "type": "devices.capabilities.on_off",
+          "instance": "powerSwitch",
+          "parameters": {
+            "dataType": "ENUM",
+            "options": [
+              { "name": "on", "value": 1 },
+              { "name": "off", "value": 0 }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "sku": "H6008",
+      "device": "4A:F1:D4:AD:FC:37:0C:DA",
+      "deviceName": "Fan Light 1",
+      "type": "devices.types.light",
+      "capabilities": [
+        {
+          "type": "devices.capabilities.on_off",
+          "instance": "powerSwitch",
+          "parameters": {
+            "dataType": "ENUM",
+            "options": [
+              { "name": "on", "value": 1 },
+              { "name": "off", "value": 0 }
+            ]
+          }
+        },
+        {
+          "type": "devices.capabilities.range",
+          "instance": "brightness",
+          "parameters": {
+            "unit": "unit.percent",
+            "dataType": "INTEGER",
+            "range": { "min": 1, "max": 100, "precision": 1 }
+          }
+        },
+        {
+          "type": "devices.capabilities.color_setting",
+          "instance": "colorRgb",
+          "parameters": {
+            "dataType": "INTEGER",
+            "range": { "min": 0, "max": 16777215, "precision": 1 }
+          }
+        },
+        {
+          "type": "devices.capabilities.color_setting",
+          "instance": "colorTemperatureK",
+          "parameters": {
+            "dataType": "INTEGER",
+            "range": { "min": 2000, "max": 9000, "precision": 1 }
+          }
+        },
+        {
+          "type": "devices.capabilities.dynamic_scene",
+          "instance": "lightScene",
+          "parameters": { "dataType": "ENUM", "options": [] }
+        },
+        {
+          "type": "devices.capabilities.dynamic_scene",
+          "instance": "diyScene",
+          "parameters": { "dataType": "ENUM", "options": [] }
+        }
+      ]
+    }
+  ]
+}
