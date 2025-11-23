@@ -1,12 +1,19 @@
+import os
 import cv2
 import numpy as np
 from pykinect2 import PyKinectV2
 from pykinect2 import PyKinectRuntime
 from collections import deque
 from datetime import datetime
+import light
 
 # Initialize Kinect
 kinect = PyKinectRuntime.PyKinectRuntime(PyKinectV2.FrameSourceTypes_Color | PyKinectV2.FrameSourceTypes_Infrared)
+
+# Global variables for tracing frame saving
+trace_image_count = 0
+save_tracing_frames = False
+os.chdir('tracing_frames')
 
 # Function to process the infrared frame
 def process_infrared_frame(infrared_frame):
@@ -89,13 +96,6 @@ class WandProcessor:
         # Update the trace with detected keypoints
         self.update_trace(keypoints)
         
-        # Erase the trace if after 5 seconds of no key points
-        self.current_time = datetime.now()
-        if self.last_keypoint_time:
-            time_diff = (self.current_time - self.last_keypoint_time).total_seconds()
-            if time_diff > self.time_till_clear:
-                self.clear_trace()
-        
         # Display the key points
         keypoint_frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
         for kp in keypoints:
@@ -122,6 +122,14 @@ class WandProcessor:
                         cv2.line(self.tracing_frame, pt1, pt2, 255, 2)
             self.last_keypoint_time = self.current_time
             self.keypoints.append(keypoints[0])
+        # Erase the trace if after certain amount of seconds of no key points
+        else:
+            self.current_time = datetime.now()
+            if self.last_keypoint_time:
+                time_diff = (self.current_time - self.last_keypoint_time).total_seconds()
+                if time_diff > self.time_till_clear:
+                    global save_tracing_frames
+                    save_tracing_frames = True
 
     # def is_trace_valid(self):
     #     """Check if the current trace is valid."""
@@ -180,7 +188,18 @@ def main():
 
                 # Display the combined frame in the OpenCV window
                 cv2.imshow("Infrared Frame", combined_frame)
-            
+
+                # Save the old tracing frame for debugging, if one already exists trace_image_count up the number
+                global trace_image_count
+                global save_tracing_frames
+                if save_tracing_frames:
+                    while os.path.exists(f"tracing_frame_{trace_image_count}.png"):
+                        trace_image_count += 1
+                    cv2.imwrite(f"tracing_frame_{trace_image_count}.png", trace_frame)
+                    save_tracing_frames = False
+                    processor.clear_trace()
+                    light.toggle_all_bulbs()
+
             # Check if there is a new color frame
             if kinect.has_new_color_frame():
                 

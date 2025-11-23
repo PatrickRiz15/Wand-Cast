@@ -1,11 +1,11 @@
 from dotenv import load_dotenv
 import os
-from tkinter import Tk, Button
+# from tkinter import Tk, Button
 from concurrent.futures import ThreadPoolExecutor
 
 load_dotenv()
 
-print(os.getenv('GOVEE_API_KEY'))
+# print(os.getenv('GOVEE_API_KEY'))
 
 import requests
 
@@ -35,7 +35,25 @@ def toggle_bulb(device, state):
     }
 
     response = requests.put(url, headers=headers, json=data)
-    print(response.status_code, response.text)
+    # print(response.status_code, response.text)
+
+def bulb_color(device, r, g, b):
+
+    data = {
+        'device': device['mac'],
+        'model': device['model'],
+        'cmd': {
+            'name': 'color',
+            'value': {
+                'r': r,
+                'g': g,
+                'b': b
+            }
+        }
+    }
+
+    response = requests.put(url, headers=headers, json=data)
+    # print(response.status_code, response.text)
 
 def toggle_all_bulbs():
     global bulb_state
@@ -45,15 +63,15 @@ def toggle_all_bulbs():
     with ThreadPoolExecutor() as executor:
         executor.map(lambda device: toggle_bulb(device, state), devices)
     
-    button.config(text=f"Turn {'Off' if bulb_state else 'On'}")
+    # button.config(text=f"Turn {'Off' if bulb_state else 'On'}")
 
-# Create the GUI
-root = Tk()
-root.title("Govee Bulb Controller")
+# # Create the GUI
+# root = Tk()
+# root.title("Govee Bulb Controller")
 
-# Add a button to toggle the bulb
-button = Button(root, text="Turn On", command=toggle_all_bulbs, width=20, height=2)
-button.pack(pady=20)
+# # Add a button to toggle the bulb
+# button = Button(root, text="Turn On", command=toggle_all_bulbs, width=20, height=2)
+# button.pack(pady=20)
 
-# Run the application
-root.mainloop()
+# # Run the application
+# root.mainloop()
