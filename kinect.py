@@ -1,8 +1,8 @@
 import os
 import cv2
 import numpy as np
-from pykinect2 import PyKinectV2
-from pykinect2 import PyKinectRuntime
+from pykinect2024 import PyKinect2024 as PyKinectV2
+from pykinect2024 import PyKinectRuntime
 from collections import deque
 from datetime import datetime
 import light
