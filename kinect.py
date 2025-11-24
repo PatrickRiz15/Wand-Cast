@@ -32,6 +32,29 @@ def process_color_frame(color_frame):
     frame = frame[:, :, :3]  # Remove alpha channel
     return frame
 
+
+def crop_trace_frame(trace, pad=10):
+    """Crop a single-channel trace image to the bounding box of non-zero pixels.
+
+    Returns the cropped image (same dtype) or None if no trace found.
+    """
+    # Find non-zero pixels
+    ys, xs = np.where(trace > 0)
+    if xs.size == 0 or ys.size == 0:
+        return None
+
+    x1, x2 = xs.min(), xs.max()
+    y1, y2 = ys.min(), ys.max()
+
+    h, w = trace.shape[:2]
+    x1 = max(0, x1 - pad)
+    y1 = max(0, y1 - pad)
+    x2 = min(w - 1, x2 + pad)
+    y2 = min(h - 1, y2 + pad)
+
+    cropped = trace[y1 : y2 + 1, x1 : x2 + 1]
+    return cropped
+
 def calculate_keypoint_center(keypoint):
     """Calculate the center of a contour."""
     moments = cv2.moments(keypoint)
@@ -164,6 +187,8 @@ def main():
     # Flags to track if the windows are resized
     infrared_window_resized = False
     color_window_resized = False
+    
+    pred_num = None
 
     print("Press 'esc' to exit.")
     try:
@@ -187,9 +212,6 @@ def main():
                 # Combine the trace with the original infared frame
                 combined_frame = cv2.add(processed_infrared_frame, trace_frame)
 
-                # Display the combined frame in the OpenCV window
-                cv2.imshow("Infrared Frame", combined_frame)
-
                 # Save the old tracing frame for debugging, if one already exists trace_image_count up the number
                 global trace_image_count
                 global save_tracing_frames
@@ -197,10 +219,25 @@ def main():
                     while os.path.exists(f"tracing_frame_{trace_image_count}.png"):
                         trace_image_count += 1
                     cv2.imwrite(f"tracing_frame_{trace_image_count}.png", trace_frame)
+                    # Crop the trace frame to the bounding box of the drawn digit
+                    cropped_trace_frame = crop_trace_frame(trace_frame, pad=50)
+                     # Optionally save the cropped image for debugging
+                    if cropped_trace_frame is not None:
+                        cv2.imwrite(f"tracing_frame_{trace_image_count}_crop.png", cropped_trace_frame)
+
                     save_tracing_frames = False
                     processor.clear_trace()
                     # light.toggle_all_bulbs()
-                    cnn.run_cnn(trace_frame)
+                    # Crop the trace frame to the bounding box of the drawn digit
+                    
+                    pred_num = cnn.run_cnn(cropped_trace_frame)
+                    # Write the predicted number on top left of combined frame
+                
+                cv2.putText(combined_frame, f"Predicted: {pred_num}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+                    
+
+                # Display the combined frame in the OpenCV window
+                cv2.imshow("Infrared Frame", combined_frame)
 
             # Check if there is a new color frame
             if kinect.has_new_color_frame():

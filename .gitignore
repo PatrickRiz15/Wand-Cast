@@ -3,3 +3,4 @@ tracing_frames
 data
 .env
 cnn/data
+best_mnist_cnn.pth

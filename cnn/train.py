@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 # from google.colab import files  # comment this line if not using Colab
 import os
+os.chdir('cnn')  # Change to the directory where cnn.py is located
 
 # -----------------------------
 # 1. Define CNN Model

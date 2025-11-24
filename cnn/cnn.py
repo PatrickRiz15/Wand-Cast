@@ -1,28 +1,38 @@
 # mnist_infer_cv2.py
-import cv2, torch, torch.nn as nn, torch.nn.functional as F
+import cv2
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import numpy as np
+from pathlib import Path
 
 # ---- 1) Rebuild the SAME model you trained ----
-class Net(nn.Module):
-    def __init__(self, num_classes=10):
-        super().__init__()
-        self.conv1 = nn.Conv2d(1, 32, 3, padding=1)
-        self.conv2 = nn.Conv2d(32, 64, 3, padding=1)
-        self.pool  = nn.MaxPool2d(2)
-        self.fc1   = nn.Linear(64 * 7 * 7, 128)
-        self.fc2   = nn.Linear(128, num_classes)
+class CNN(nn.Module):
+    def __init__(self):
+        super(CNN, self).__init__()
+        self.conv1 = nn.Conv2d(1, 32, kernel_size=3, padding=1)
+        self.pool = nn.MaxPool2d(2, 2)
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
+        self.fc1 = nn.Linear(64 * 7 * 7, 128)
+        self.fc2 = nn.Linear(128, 10)
 
     def forward(self, x):
-        x = self.pool(F.relu(self.conv1(x)))  # 28->14
-        x = self.pool(F.relu(self.conv2(x)))  # 14->7
-        x = x.view(x.size(0), -1)
-        x = F.relu(self.fc1(x))
-        return self.fc2(x)
+        x = torch.relu(self.conv1(x))
+        x = self.pool(x)
+        x = torch.relu(self.conv2(x))
+        x = self.pool(x)
+        x = x.view(-1, 64 * 7 * 7)
+        x = torch.relu(self.fc1(x))
+        x = self.fc2(x)
+        return x
 
 # ---- 2) Minimal preprocessing for an OpenCV image ----
 def preprocess_as_mnist(img_org, invert=False):
     # MNIST is 1×28×28 grayscale, normalized with mean/std below
-    # img = cv2.cvtColor(img_org, cv2.COLOR_BGR2GRAY)      # (H,W)
     img = cv2.resize(img_org, (28, 28), interpolation=cv2.INTER_AREA)
+    # Any pixel not 0 becomes 255
+    img = np.where(img != 0, 255, img)
+    # cv2.imwrite("Resized Input.png", img)
     if invert:                                           # if your digit is black-on-white vs white-on-black
         img = 255 - img
     img = img.astype("float32") / 255.0
@@ -36,8 +46,9 @@ def preprocess_as_mnist(img_org, invert=False):
 @torch.no_grad()
 def run_cnn(img_org, invert=False):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = Net().to(device)
-    model_path = "minist_cnn.pth"  # path to saved model
+    model = CNN().to(device)
+    # path to saved model (file located in the same `cnn` directory as this script)
+    model_path = str(Path(__file__).resolve().parent / "mnist_cnn.pth")
     state = torch.load(model_path, map_location=device)
     model.load_state_dict(state, strict=True)
     model.eval()
@@ -53,12 +64,5 @@ def run_cnn(img_org, invert=False):
     pred = int(torch.argmax(probs).item())
     print(f"Predicted digit: {pred}")
     print("Probabilities:", probs.cpu().numpy())
+    return pred
 
-if __name__ == "__main__":
-    # Quick hardcoded example — edit paths below or wrap with argparse if you want
-    # run_cnn(
-    #     model_path="best_mnist_cnn.pth",
-    #     image_path="digit.png"
-    #     # invert=True,      # set False/True depending on your image foreground/background
-    # )
-    pass
