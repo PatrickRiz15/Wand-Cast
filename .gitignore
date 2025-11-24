@@ -1,2 +1,5 @@
 __pycache__
 tracing_frames
+data
+.env
+cnn/data

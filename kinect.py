@@ -6,6 +6,7 @@ from pykinect2 import PyKinectRuntime
 from collections import deque
 from datetime import datetime
 import light
+from cnn import cnn
 
 # Initialize Kinect
 kinect = PyKinectRuntime.PyKinectRuntime(PyKinectV2.FrameSourceTypes_Color | PyKinectV2.FrameSourceTypes_Infrared)
@@ -198,7 +199,8 @@ def main():
                     cv2.imwrite(f"tracing_frame_{trace_image_count}.png", trace_frame)
                     save_tracing_frames = False
                     processor.clear_trace()
-                    light.toggle_all_bulbs()
+                    # light.toggle_all_bulbs()
+                    cnn.run_cnn(trace_frame)
 
             # Check if there is a new color frame
             if kinect.has_new_color_frame():
