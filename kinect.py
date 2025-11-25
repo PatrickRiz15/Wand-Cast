@@ -12,8 +12,8 @@ from cnn import cnn
 kinect = PyKinectRuntime.PyKinectRuntime(PyKinectV2.FrameSourceTypes_Color | PyKinectV2.FrameSourceTypes_Infrared)
 
 # Global variables for tracing frame saving
-trace_image_count = 0
-save_tracing_frames = False
+# trace_image_count = 0
+run_inference = False
 os.chdir('tracing_frames')
 
 # Function to process the infrared frame
@@ -65,6 +65,30 @@ def calculate_keypoint_center(keypoint):
     cy = int(moments['m01'] / moments['m00'])
     return cx, cy
 
+def action(number):
+    match number:
+        case 0:
+            return
+        case 1:
+            return
+        case 2:
+            return
+        case 3:
+            return
+        case 4:
+            return
+        case 5:
+            return
+        case 6:
+            return
+        case 7:
+            return
+        case 8:
+            return
+        case 9:
+            # light.toggle_all_bulbs()
+            return
+
 class WandProcessor:
     def __init__(self, frame_width, frame_height):
         self.frame_width = frame_width
@@ -77,7 +101,7 @@ class WandProcessor:
         self.last_keypoint_time = None
         self.max_trace_distance = 20
         self.minimum_area = 5
-        self.time_till_clear = 5
+        self.time_till_clear = 2
         # self.detector = cv2.SimpleBlobDetector_create(self._blob_detector_params())
 
     # def _blob_detector_params(self):
@@ -152,8 +176,8 @@ class WandProcessor:
             if self.last_keypoint_time:
                 time_diff = (self.current_time - self.last_keypoint_time).total_seconds()
                 if time_diff > self.time_till_clear:
-                    global save_tracing_frames
-                    save_tracing_frames = True
+                    global run_inference
+                    run_inference = True
 
     # def is_trace_valid(self):
     #     """Check if the current trace is valid."""
@@ -213,27 +237,30 @@ def main():
                 combined_frame = cv2.add(processed_infrared_frame, trace_frame)
 
                 # Save the old tracing frame for debugging, if one already exists trace_image_count up the number
-                global trace_image_count
-                global save_tracing_frames
-                if save_tracing_frames:
-                    while os.path.exists(f"tracing_frame_{trace_image_count}.png"):
-                        trace_image_count += 1
-                    cv2.imwrite(f"tracing_frame_{trace_image_count}.png", trace_frame)
+                # global trace_image_count
+                global run_inference
+                if run_inference:
+                    # while os.path.exists(f"tracing_frame_{trace_image_count}.png"):
+                    #     trace_image_count += 1
+                    # cv2.imwrite(f"tracing_frame_{trace_image_count}.png", trace_frame)
                     # Crop the trace frame to the bounding box of the drawn digit
                     cropped_trace_frame = crop_trace_frame(trace_frame, pad=50)
-                     # Optionally save the cropped image for debugging
-                    if cropped_trace_frame is not None:
-                        cv2.imwrite(f"tracing_frame_{trace_image_count}_crop.png", cropped_trace_frame)
+                    # # Optionally save the cropped image for debugging
+                    # if cropped_trace_frame is not None:
+                    #     cv2.imwrite(f"tracing_frame_{trace_image_count}_crop.png", cropped_trace_frame)
 
-                    save_tracing_frames = False
+                    run_inference = False
                     processor.clear_trace()
                     # light.toggle_all_bulbs()
                     # Crop the trace frame to the bounding box of the drawn digit
                     
                     pred_num = cnn.run_cnn(cropped_trace_frame)
-                    # Write the predicted number on top left of combined frame
-                
-                cv2.putText(combined_frame, f"Predicted: {pred_num}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+
+                    action(pred_num)
+                    
+
+                # Write the predicted number on top left of combined frame
+                cv2.putText(combined_frame, f"Drawn Number: {pred_num}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
                     
 
                 # Display the combined frame in the OpenCV window
