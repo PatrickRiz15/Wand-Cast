@@ -6,6 +6,9 @@ import torch.nn.functional as F
 import numpy as np
 from pathlib import Path
 
+model = None
+device = None
+
 # ---- 1) Rebuild the SAME model you trained ----
 class CNN(nn.Module):
     def __init__(self):
@@ -29,10 +32,12 @@ class CNN(nn.Module):
 # ---- 2) Minimal preprocessing for an OpenCV image ----
 def preprocess_as_mnist(img_org, invert=False):
     # MNIST is 1×28×28 grayscale, normalized with mean/std below
-    img = cv2.resize(img_org, (28, 28), interpolation=cv2.INTER_AREA)
+    # if img_org is not empty
+    if img_org is not None:
+        img = cv2.resize(img_org, (28, 28), interpolation=cv2.INTER_AREA)
     # Any pixel not 0 becomes 255
     img = np.where(img != 0, 255, img)
-    # cv2.imwrite("Resized Input.png", img)
+    cv2.imwrite("Resized Input.png", img)
     if invert:                                           # if your digit is black-on-white vs white-on-black
         img = 255 - img
     img = img.astype("float32") / 255.0
@@ -45,17 +50,11 @@ def preprocess_as_mnist(img_org, invert=False):
 # ---- 3) Load checkpoint + run inference ----
 @torch.no_grad()
 def run_cnn(img_org, invert=False):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = CNN().to(device)
-    # path to saved model (file located in the same `cnn` directory as this script)
-    model_path = str(Path(__file__).resolve().parent / "mnist_cnn.pth")
-    state = torch.load(model_path, map_location=device)
-    model.load_state_dict(state, strict=True)
-    model.eval()
+    global model, device
 
-    # img_org = cv2.imread(image_path, cv2.IMREAD_COLOR)
-    # if img_org is None:
-    #     raise FileNotFoundError(f"Couldn't read image: {image_path}")
+    # Ensure model is loaded
+    if model is None:
+        load_model()
 
     x = preprocess_as_mnist(img_org, invert=invert).to(device)
 
@@ -66,3 +65,36 @@ def run_cnn(img_org, invert=False):
     print("Probabilities:", probs.cpu().numpy())
     return pred
 
+
+def load_model():
+    """Load the model into memory and return the device used."""
+    global model, device
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = CNN().to(device)
+    # path to saved model (file located in the same `cnn` directory as this script)
+    model_path = str(Path(__file__).resolve().parent / "mnist_cnn.pth")
+    state = torch.load(model_path, map_location=device)
+    model.load_state_dict(state, strict=True)
+    model.eval()
+
+
+def close_model():
+    """Free model resources (move to CPU, delete and clear cache)."""
+    global model, device
+    if model is None:
+        return
+    try:
+        # move to CPU to release GPU tensors
+        model.to("cpu")
+    except Exception:
+        pass
+    del model
+    model = None
+    # clear cached memory
+    try:
+        torch.cuda.empty_cache()
+    except Exception:
+        pass
+
+if __name__ == "__main__":
+    load_model()
