@@ -16,6 +16,9 @@ kinect = PyKinectRuntime.PyKinectRuntime(PyKinectV2.FrameSourceTypes_Color | PyK
 run_inference = False
 os.chdir('tracing_frames')
 
+trace_area_threshold = 4000  # Minimum area of trace to be considered valid
+trace_distance_threshold = 100  # Maximum width/height of trace to be considered valid
+
 # Function to process the infrared frame
 def process_infrared_frame(infrared_frame):
     # Reshape the frame to match Kinect's resolution
@@ -45,6 +48,14 @@ def crop_trace_frame(trace, pad=10):
 
     x1, x2 = xs.min(), xs.max()
     y1, y2 = ys.min(), ys.max()
+
+    # # calculate area of bounding box and return None if too small
+    # area = (x2 - x1) * (y2 - y1)
+    # print(f"Trace area: {area}")
+    # if area < trace_area_threshold:
+    #     if (x2 - x1) < trace_distance_threshold and (y2 - y1) < trace_distance_threshold:
+    #         return None
+        
 
     h, w = trace.shape[:2]
     x1 = max(0, x1 - pad)
@@ -78,6 +89,7 @@ def action(number):
         case 4:
             return
         case 5:
+            light.toggle_outlet()
             return
         case 6:
             return
@@ -102,20 +114,6 @@ class WandProcessor:
         self.max_trace_distance = 20
         self.minimum_area = 5
         self.time_till_clear = 2
-        # self.detector = cv2.SimpleBlobDetector_create(self._blob_detector_params())
-
-    # def _blob_detector_params(self):
-    #     params = cv2.SimpleBlobDetector_Params()
-    #     params.minThreshold = 100
-    #     params.maxThreshold = 255
-    #     params.filterByColor = True
-    #     params.blobColor = 255
-    #     params.filterByArea = True
-    #     params.minArea = 5
-    #     params.maxArea = 100000
-    #     params.filterByCircularity = False
-    #     params.minCircularity = 0.5
-    #     return params
 
     def process_frame(self, frame):
         """Process a single frame for wand detection and trace updating."""
@@ -128,9 +126,6 @@ class WandProcessor:
         bg_subtracted = cv2.bitwise_and(frame, frame, mask=fg_mask)
 
         # cv2.imshow("bg_subtracted", bg_subtracted)
-
-        # Perform blob detection
-        # keypoints = self.detector.detect(bg_subtracted)
         
         # Threshold the frame to only detect the wand
         bg_subtracted_threshold = cv2.threshold(bg_subtracted, 200, 255, cv2.THRESH_BINARY)[1]
@@ -178,21 +173,6 @@ class WandProcessor:
                 if time_diff > self.time_till_clear:
                     global run_inference
                     run_inference = True
-
-    # def is_trace_valid(self):
-    #     """Check if the current trace is valid."""
-    #     if len(self.keypoints) < 35:
-    #         return False
-    #     area = self._calculate_trace_area()
-    #     return area > 500
-
-    # def _calculate_trace_area(self):
-    #     """Calculate the area of the bounding box around the trace."""
-    #     points = [kp.pt for kp in self.keypoints]
-    #     x_coords, y_coords = zip(*points)
-    #     width = max(x_coords) - min(x_coords)
-    #     height = max(y_coords) - min(y_coords)
-    #     return width * height
 
     def clear_trace(self):
         """Clear the trace frame of all keypoints and their data."""
@@ -244,6 +224,14 @@ def main():
                     #     trace_image_count += 1
                     # cv2.imwrite(f"tracing_frame_{trace_image_count}.png", trace_frame)
                     # Crop the trace frame to the bounding box of the drawn digit
+                    
+                    # Grab the biggest contour from the trace frame and remove the rest
+                    contours, _ = cv2.findContours(trace_frame, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                    if contours:
+                        largest_contour = max(contours, key=cv2.contourArea)
+                        trace_frame = np.zeros_like(trace_frame)
+                        cv2.drawContours(trace_frame, [largest_contour], -1, 255, thickness=cv2.FILLED)                    
+
                     cropped_trace_frame = crop_trace_frame(trace_frame, pad=50)
                     # # Optionally save the cropped image for debugging
                     # if cropped_trace_frame is not None:
@@ -254,9 +242,9 @@ def main():
                     # light.toggle_all_bulbs()
                     # Crop the trace frame to the bounding box of the drawn digit
                     
-                    pred_num = cnn.run_cnn(cropped_trace_frame)
-
-                    action(pred_num)
+                    if cropped_trace_frame is not None:
+                        pred_num = cnn.run_cnn(cropped_trace_frame)
+                        action(pred_num)
                     
 
                 # Write the predicted number on top left of combined frame
@@ -293,6 +281,7 @@ def main():
         # Release resources
         kinect.close()
         cv2.destroyAllWindows()
+        cnn.close_model()
 
 if __name__ == "__main__":
     main()
