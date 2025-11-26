@@ -15,15 +15,18 @@ headers = {
     'Govee-API-Key': os.getenv('GOVEE_API_KEY')  # Replace 'xxxx' with your actual API key
 }
 
-devices = [
+lights = [
     {'mac': os.getenv('FAN_LIGHT_1_MAC'), 'model': 'H6008'},
-    {'mac': os.getenv('FAN_LIGHT_2_MAC'), 'model': 'H6008'}
+    {'mac': os.getenv('FAN_LIGHT_2_MAC'), 'model': 'H6008'},
 ]
 
-# Track the bulb's current state
-bulb_state = False  # False for off, True for on
+outlet = {'mac': os.getenv('OUTLET_MAC'), 'model': 'H5080'}
 
-def toggle_bulb(device, state):
+# Track the device's current state
+bulb_state = True  # False for off, True for on
+outlet_state = True
+
+def toggle_device(device, state):
 
     data = {
         'device': device['mac'],
@@ -61,9 +64,30 @@ def toggle_all_bulbs():
     state = 'on' if bulb_state else 'off'
     
     with ThreadPoolExecutor() as executor:
-        executor.map(lambda device: toggle_bulb(device, state), devices)
-    
+        executor.map(lambda device: toggle_device(device, state), lights)
+
+def get_all_devices_states():
+    headers = {
+    'Content-Type': 'application/json',
+    'Govee-API-Key': os.getenv('GOVEE_API_KEY')  # Replace 'xxxx' with your actual API key
+    }
+
+    # put response in a json file
+    response = requests.get('https://openapi.api.govee.com/router/api/v1/user/devices', headers=headers)
+    with open('devices.json', 'w') as f:
+        f.write(response.text)
+
     # button.config(text=f"Turn {'Off' if bulb_state else 'On'}")
+
+def toggle_outlet():
+
+    global outlet_state
+    outlet_state = not outlet_state
+    state = 'on' if outlet_state else 'off'
+    toggle_device(outlet, state)
+
+    # response = requests.put(url, headers=headers, json=data)
+    # print(response.status_code, response.text)
 
 # # Create the GUI
 # root = Tk()
@@ -75,3 +99,6 @@ def toggle_all_bulbs():
 
 # # Run the application
 # root.mainloop()
+
+toggle_outlet()
+toggle_all_bulbs()

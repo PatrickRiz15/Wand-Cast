@@ -4,3 +4,5 @@ data
 cnn/data
 best_mnist_cnn.pth
 .env
+devices.json
+.json
