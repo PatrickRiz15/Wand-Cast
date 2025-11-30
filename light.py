@@ -12,7 +12,7 @@ import requests
 url = 'https://developer-api.govee.com/v1/devices/control'
 headers = {
     'Content-Type': 'application/json',
-    'Govee-API-Key': os.getenv('GOVEE_API_KEY')  # Replace 'xxxx' with your actual API key
+    'Govee-API-Key': os.getenv('GOVEE_API_KEY')
 }
 
 lights = [
@@ -57,6 +57,10 @@ def bulb_color(device, r, g, b):
 
     response = requests.put(url, headers=headers, json=data)
     # print(response.status_code, response.text)
+
+def toggle_all_bulbs_color(r, g, b):
+    with ThreadPoolExecutor() as executor:
+        executor.map(lambda device: bulb_color(device, r, g, b), lights)
 
 def toggle_all_bulbs():
     global bulb_state
