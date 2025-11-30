@@ -58,6 +58,10 @@ def bulb_color(device, r, g, b):
     response = requests.put(url, headers=headers, json=data)
     # print(response.status_code, response.text)
 
+def toggle_all_bulbs_color(r, g, b):
+    with ThreadPoolExecutor() as executor:
+        executor.map(lambda device: bulb_color(device, r, g, b), lights)
+
 def toggle_all_bulbs():
     global bulb_state
     bulb_state = not bulb_state

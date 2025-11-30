@@ -49,14 +49,14 @@ def preprocess_as_mnist(img_org, invert=False):
 
 # ---- 3) Load checkpoint + run inference ----
 @torch.no_grad()
-def run_cnn(img_org, invert=False):
+def run_cnn(img_org):
     global model, device
 
     # Ensure model is loaded
     if model is None:
         load_model()
 
-    x = preprocess_as_mnist(img_org, invert=invert).to(device)
+    x = preprocess_as_mnist(img_org).to(device)
 
     logits = model(x)
     probs = F.softmax(logits, dim=1)[0]
