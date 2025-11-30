@@ -79,22 +79,17 @@ def calculate_keypoint_center(keypoint):
 def action(number):
     match number:
         case 0:
-            light.toggle_all_bulbs_color(0, 0, 255)
             return
         case 1:
-            light.toggle_all_bulbs_color(255, 255, 255)
             return
         case 2:
-            light.toggle_all_bulbs_color(0, 255, 0)
             return
         case 3:
-            light.toggle_all_bulbs_color(255, 0, 0)
             return
         case 4:
             return
         case 5:
-            # light.toggle_outlet()
-            light.toggle_all_bulbs()
+            light.toggle_outlet()
             return
         case 6:
             return
@@ -103,6 +98,7 @@ def action(number):
         case 8:
             return
         case 9:
+            # light.toggle_all_bulbs()
             return
 
 class WandProcessor:
@@ -146,8 +142,7 @@ class WandProcessor:
         # Display the key points
         keypoint_frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
         for kp in keypoints:
-            # cv2.circle(keypoint_frame, (int(calculate_keypoint_center(kp)[0]), int(calculate_keypoint_center(kp)[1])), 5, (0, 0, 255), 2)
-            pass
+            cv2.circle(keypoint_frame, (int(calculate_keypoint_center(kp)[0]), int(calculate_keypoint_center(kp)[1])), 5, (0, 0, 255), 2)
         cv2.imshow("Key Points", keypoint_frame)
 
         # Combine the trace with the original frame
@@ -228,6 +223,7 @@ def main():
                     # while os.path.exists(f"tracing_frame_{trace_image_count}.png"):
                     #     trace_image_count += 1
                     # cv2.imwrite(f"tracing_frame_{trace_image_count}.png", trace_frame)
+                    # Crop the trace frame to the bounding box of the drawn digit
                     
                     # Grab the biggest contour from the trace frame and remove the rest
                     contours, _ = cv2.findContours(trace_frame, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -235,8 +231,7 @@ def main():
                         largest_contour = max(contours, key=cv2.contourArea)
                         trace_frame = np.zeros_like(trace_frame)
                         cv2.drawContours(trace_frame, [largest_contour], -1, 255, thickness=cv2.FILLED)                    
-                    
-                    # Crop the trace frame to the bounding box of the drawn digit
+
                     cropped_trace_frame = crop_trace_frame(trace_frame, pad=50)
                     # # Optionally save the cropped image for debugging
                     # if cropped_trace_frame is not None:
@@ -244,6 +239,8 @@ def main():
 
                     run_inference = False
                     processor.clear_trace()
+                    # light.toggle_all_bulbs()
+                    # Crop the trace frame to the bounding box of the drawn digit
                     
                     if cropped_trace_frame is not None:
                         pred_num = cnn.run_cnn(cropped_trace_frame)
